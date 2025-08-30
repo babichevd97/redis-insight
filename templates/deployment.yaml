@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "redisinsight.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "redisinsight.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "redisinsight.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "redisinsight.fullname" . }}
+    spec:
+      volumes:
+
+        - name: {{ include "redisinsight.fullname" . }}
+          persistentVolumeClaim:
+            claimName: {{ include "redisinsight.fullname" . }}-pv-claim
+
+      {{- if .Values.dbProvision.enabled }}
+        - name: {{ include "redisinsight.fullname" . }}-cm
+          configMap:
+            name: {{ include "redisinsight.fullname" . }}-cm
+      {{- end }}
+      
+      initContainers:
+        - name: init
+          image: {{ .Values.init.repository }}
+          command: ["/bin/sh", "-c", "chown -R 1000 /data"]
+          volumeMounts:
+            - name: {{ include "redisinsight.fullname" . }}
+              mountPath: /data
+      containers:
+        - name: {{ include "redisinsight.fullname" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          {{- if .Values.dbProvision.enabled }}
+          env: 
+            - name: RI_PRE_SETUP_DATABASES_PATH
+              value: "{{ .Values.dbProvision.mountpath}}/databases.json"        
+          {{- end }}
+
+          volumeMounts:
+            - name: {{ include "redisinsight.fullname" . }}
+              mountPath: /data
+
+          {{- if .Values.dbProvision.enabled }}
+            - name: {{ include "redisinsight.fullname" . }}-cm
+              mountPath: {{ .Values.dbProvision.mountpath}}
+          {{- end }}
+          
+          ports:
+            - containerPort: 5540
+              protocol: TCP

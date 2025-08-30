@@ -1,0 +1,24 @@
+replicaCount: 1
+image:
+  repository: docker-registry.x5.ru/redis/redisinsight
+  tag: latest # Specify
+  pullPolicy: IfNotPresent
+
+init:
+  repository: docker-registry.x5.ru/busybox
+
+ingress:
+  enabled: false
+
+service:
+  port: 80 # Same goes to ingress rule
+  targetPort: 5540
+  
+persistence:
+  enabled: true
+  size: 100Mi
+  accessModes:
+    - ReadWriteMany
+
+dbProvision:
+  enabled: false

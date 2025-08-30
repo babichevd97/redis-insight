@@ -1,0 +1,5 @@
+apiVersion: v2
+name: redisinsight
+description: Helm chart for RedisInsight
+version: 0.1.0
+appVersion: latest

@@ -1,0 +1,42 @@
+namespace: redis
+
+service:
+  port: 80 # Same goes to ingress rule
+  targetPort: 5540
+  
+persistence:
+  enabled: true
+  size: 100Mi
+  accessModes:
+    - ReadWriteMany
+
+# Provision redis database. Adds it to list of available charts after installation
+dbProvision:
+  enabled: true
+  mountpath: /data/preconfigured # Directoiry, where provisioned jsons should be mounted
+  databases:
+  # Minimum amount of key-values to be transformed into json 
+    - id: "9ecfc0a1-8e49-4952-af0b-716c6f8ce61b" # Should be generated
+      host: "redis-cluster.host" # Redis host
+      port: 6379
+      name: "redis-cluster.host"
+      username: "user"
+      password: "pass"
+      connectionType: "CLUSTER"
+      tls: false
+
+ingress:
+  enabled: true
+  className: nginx
+
+  hosts:
+    - host: redis-insight.host
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+
+# Example annotations for basicAuth
+  annotations:
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: secret-name
+    nginx.ingress.kubernetes.io/auth-realm: Authentication Required - Redis Insight
